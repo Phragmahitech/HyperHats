@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "HatEngine.h"
+#include "PresetLibrary.h"
 
 /**
     HyperHats : instrument VST3 de charleston en synthèse pure.
@@ -76,6 +77,9 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     juce::AudioProcessorValueTreeState apvts;
+
+    /** Points de départ + presets de l'utilisateur (fichiers .hhpreset). */
+    PresetLibrary presets;
 
     //==========================================================================
     // Pour l'interface

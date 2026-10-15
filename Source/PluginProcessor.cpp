@@ -193,7 +193,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout HyperHatsAudioProcessor::cre
 //==============================================================================
 HyperHatsAudioProcessor::HyperHatsAudioProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "HyperHats", createParameterLayout())
+      apvts (*this, nullptr, "HyperHats", createParameterLayout()),
+      presets (apvts, "HyperHats", ".hhpreset",
+               { [] { return (int) getPresets().size(); },
+                 [] (int i) { return juce::String (getPresets()[(size_t) i].name); },
+                 [this] (int i) { applyPreset (i); },
+                 [this] { return getMatchingPreset(); } })
 {
     typeParam      = apvts.getRawParameterValue (typeId);
     alloyParam     = apvts.getRawParameterValue (alloyId);
@@ -211,6 +216,7 @@ HyperHatsAudioProcessor::HyperHatsAudioProcessor()
     levelParam     = apvts.getRawParameterValue (levelId);
 
     engine.setParams (readParams());
+    presets.restoreFromState();   // réglages par défaut = TIGHT
 }
 
 hyperhats::HatParams HyperHatsAudioProcessor::readParams() const
@@ -343,7 +349,10 @@ void HyperHatsAudioProcessor::setStateInformation (const void* data, int sizeInB
 {
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
         if (xml->hasTagName (apvts.state.getType()))
+        {
             apvts.replaceState (juce::ValueTree::fromXml (*xml));
+            presets.restoreFromState();
+        }
 }
 
 juce::AudioProcessorEditor* HyperHatsAudioProcessor::createEditor()
