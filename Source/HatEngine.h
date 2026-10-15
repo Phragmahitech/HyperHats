@@ -178,7 +178,7 @@ public:
         auto signedDie = [&dice] { return dice.next(); };
 
         const float c = clamp01 (p.character);
-        const float vary = clamp01 (p.variation + 0.25f * c);
+        const float vary = clamp01 (p.variation);   // VARIATION seul : à 0, toutes les frappes sont identiques
 
         // Réglages de la frappe, avec ses petites différences
         const double tuneSt = p.tune + vary * 0.30 * signedDie();                         // jusqu'à 30 centièmes
@@ -272,6 +272,7 @@ public:
             pt.s = std::sin (ph);
             pt.amp = a;
             pt.extraMul = std::exp (-relDecay * 1.5 / decaySamples);
+            pt.extra = 1.0;   // l'enveloppe du partiel repart de 1 à chaque frappe
             norm += a * a;
         }
 
@@ -592,7 +593,8 @@ public:
         }
 
         ++hitCount;
-        target->start (params, open, std::clamp (velocity, 0.0f, 1.0f), sampleRate, hitCount * 0x9E3779B9u + seedBase);
+        holdPhase = 0;   // CRUSH repart du début de la frappe
+        target->start (params, open, std::clamp (velocity, 0.0f, 1.0f), sampleRate, hitSeed());
         lastHitOpen = open;
     }
 
@@ -667,6 +669,13 @@ public:
     }
 
     uint32_t getHitCount() const noexcept      { return hitCount; }
+
+    /** Graine de la frappe : à VARIATION 0, toujours la même (bruit et phases identiques d'un coup à l'autre) ;
+        au-dessus, une nouvelle graine par frappe. */
+    uint32_t hitSeed() const noexcept
+    {
+        return params.variation > 0.0005f ? hitCount * 0x9E3779B9u + seedBase : seedBase;
+    }
     bool wasLastHitOpen() const noexcept       { return lastHitOpen; }
     void setSeedBase (uint32_t s) noexcept     { seedBase = s; }
 

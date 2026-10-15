@@ -292,6 +292,26 @@ int main()
         CHECK (std::abs (r1 - r2) > 1e-4, "VARIATION sans effet");
     }
 
+
+    std::printf ("VARIATION 0 : toutes les frappes identiques, au bit près\n");
+    for (int alloy = 0; alloy < 3; ++alloy)
+        for (bool open : { false, true })
+        {
+            HatParams p;
+            p.alloy = alloy; p.variation = 0.0f; p.character = 0.8f; p.source = 0.6f; p.width = 0.6f; p.crush = 0.3f;
+            auto r = render (p, { { 0, open, 0.8f }, { 3000, open, 0.8f }, { 6000, open, 0.8f } }, 9000);
+            const size_t len = (size_t) (2.5 * sr);
+            double maxDiff = 0;
+            for (int k = 1; k < 3; ++k)
+                for (size_t i = 0; i < len; ++i)
+                {
+                    const size_t j = (size_t) (k * 3.0 * sr) + i;
+                    maxDiff = std::max (maxDiff, (double) std::abs (r.left[j] - r.left[i]));
+                    maxDiff = std::max (maxDiff, (double) std::abs (r.right[j] - r.right[i]));
+                }
+            CHECK (maxDiff == 0.0, "alliage %d open=%d : frappes différentes à VARIATION 0 (écart %.2e)", alloy, (int) open, maxDiff);
+        }
+
     std::printf ("Fréquences d'échantillonnage et réglages au hasard\n");
     {
         Noise rng;
